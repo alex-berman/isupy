@@ -55,7 +55,8 @@ class IntegrateRequest(Rule):
     def effects(state: DialogState):
         state.agenda = [
             Findout(WhQuestion(meeting_person)),
-            Findout(WhQuestion(meeting_date))
+            Findout(WhQuestion(meeting_date)),
+            Findout(BooleanQuestion(meeting_whole_day))
             ] + state.agenda
 
 

@@ -19,8 +19,10 @@ class Predicate(SemanticClass):
 
 person = create_sort('person')
 date = create_sort('date')
+boolean = create_sort('boolean')
 meeting_person = Predicate(person)
 meeting_date = Predicate(date)
+meeting_whole_day = Predicate(boolean)
 vlad = Individual('vlad', person)
 monday = Individual('monday', date)
 
@@ -42,7 +44,12 @@ class Question(SemanticClass):
 
 @dataclass
 class WhQuestion(Question):
-    predicate: TypeVar
+    predicate: Predicate
+
+
+@dataclass
+class BooleanQuestion(Question):
+    predicate: Predicate
 
 
 @dataclass
