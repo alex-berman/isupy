@@ -15,15 +15,15 @@ def run_dialog_test_sem(dm, turns, state):
         handle_turn_sem(dm, speaker, move_representation, state)
 
 
-def handle_turn_sem(dm, speaker, move_representation, state):
+def handle_turn_sem(dm, speaker, moves_representation, state):
     if speaker == 'S':
-        expected_system_move = None if move_representation == '' else deserialize(move_representation)
+        expected_system_move = None if moves_representation == '' else deserialize(moves_representation)
         try:
             actual_system_move = dm.get_next_moves(state)
         except:
-            pytest.fail(f'Exception raised when expecting system move {move_representation}')
+            pytest.fail(f'Exception raised when expecting system move {moves_representation}')
             raise
         assert actual_system_move == expected_system_move
     elif speaker == 'U':
-        move = deserialize(move_representation)
-        state.latest_move = move
+        moves = deserialize(moves_representation)
+        dm.set_latest_moves(state, moves)

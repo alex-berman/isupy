@@ -1,3 +1,5 @@
-greeting:
+create_appointment:
   turns:
     - S [Greet()]
+    - U [Request(CreateAppointment())]
+    - S [Ask(WhQuestion(Who))]

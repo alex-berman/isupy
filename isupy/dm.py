@@ -11,5 +11,5 @@ class DialogueManager(ABC):
 
     @staticmethod
     @abstractmethod
-    def set_latest_move(state: DialogState):
+    def set_latest_moves(state: DialogState):
         pass
