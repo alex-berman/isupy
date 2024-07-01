@@ -51,4 +51,7 @@ class IntegrateRequest(Rule):
 
     @staticmethod
     def effects(state: DialogState):
-        state.private.agenda.insert(0, Findout(WhQuestion(Who)))
+        state.private.agenda = [
+            Findout(WhQuestion(MeetingPerson)),
+            Findout(WhQuestion(MeetingDate))
+            ] + state.private.agenda

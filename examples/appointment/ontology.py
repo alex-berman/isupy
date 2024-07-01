@@ -2,6 +2,14 @@ from isupy.ontology import *
 import isupy.ontology
 
 
+def Sort(name):
+    return TypeVar(name, bound=SemanticType)
+
+
+def Individual(name, sort):
+    return TypeVar(name, bound=sort)
+
+
 @dataclass
 class Action(SemanticClass):
     pass
@@ -32,15 +40,14 @@ class Ask(Move):
     question: Question
 
 
-def Sort(name):
-    return TypeVar(name, bound=SemanticType)
-
-
-def Individual(name, sort):
-    return TypeVar(name, bound=sort)
+@dataclass
+class ShortAnswer(Move):
+    individual: Individual
 
 
 Person = Sort('Person')
+MeetingDate = Sort('MeetingDate')
+Vlad = Individual('Vlad', Person)
 
 
 @dataclass
@@ -49,7 +56,7 @@ class Proposition(SemanticClass):
 
 
 @dataclass
-class Who(Proposition):
+class MeetingPerson(Proposition):
     person: Person
 
 

@@ -2,4 +2,6 @@ create_appointment:
   turns:
     - S [Greet()]
     - U [Request(CreateAppointment())]
-    - S [Ask(WhQuestion(Who))]
+    - S [Ask(WhQuestion(MeetingPerson))]
+    - U [ShortAnswer(Vlad)]
+    - S [Ask(WhQuestion(MeetingDate))]
