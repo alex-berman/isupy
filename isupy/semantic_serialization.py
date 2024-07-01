@@ -7,6 +7,7 @@ import isupy.ontology
 
 permitted_classes = {}
 permitted_type_vars = {}
+permitted_instances = {}
 
 
 def register_module(module):
@@ -17,6 +18,8 @@ def register_module(module):
                 permitted_classes[name] = value
         elif isinstance(value, TypeVar):
             permitted_type_vars[name] = value
+        elif isinstance(value, isupy.ontology.SemanticClass):
+            permitted_instances[name] = value
 
 
 register_module(isupy.ontology)
@@ -32,12 +35,12 @@ class BuildException(Exception):
 
 def deserialize(string):
     try:
-        module = ast.parse(string)
+        node = ast.parse(string)
     except Exception as parse_exception:
         raise DeserializationException(
             f'Exception occurred when parsing {string!r}: {parse_exception}')
     try:
-        return build(module.body[0])
+        return build(node.body[0])
     except BuildException as build_exception:
         raise DeserializationException(
             f'Exception occurred when building deserialization for {string!r}: {build_exception}')
@@ -63,6 +66,8 @@ def build(node):
             return permitted_type_vars[node.id]
         elif node.id in permitted_classes:
             return permitted_classes[node.id]
+        elif node.id in permitted_instances:
+            return permitted_instances[node.id]
         else:
             raise BuildException(f'Expected a permitted class or individual for {node} but got {node.id!r}')
     if isinstance(node, ast.Constant):
