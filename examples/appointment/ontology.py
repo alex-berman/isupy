@@ -106,6 +106,11 @@ class Confirm(Move):
 
 
 @dataclass
+class PerformedAction(Move):
+    action: SemanticClass
+
+
+@dataclass
 class NegativeUnderstanding(Move):
     pass
 

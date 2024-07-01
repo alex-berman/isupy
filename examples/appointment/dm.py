@@ -20,10 +20,11 @@ class DialogueManager(isupy.dm.DialogueManager):
         state.next_moves = []
         try_rule(state, SelectNegativeUnderstanding)
         try_rule(state, IntegrateRequest)
-        try_rule(state, IntegrateShortAnswer)
+        try_rule(state, IntegrateShortAnswerForFindout)
         try_rule(state, SelectGreet)
         try_rule(state, SelectAskViaFindout)
         try_rule(state, SelectAskActionConfirmation)
+        try_rule(state, IntegrateShortAnswerForConfirmAction)
         logger.debug('get_next_moves returns', next_moves=state.next_moves)
         return state.next_moves
 
@@ -83,7 +84,7 @@ class IntegrateRequest(Rule):
             ] + state.agenda
 
 
-class IntegrateShortAnswer(Rule):
+class IntegrateShortAnswerForFindout(Rule):
     @staticmethod
     def preconditions(state: DialogState):
         if len(state.agenda) > 0:
@@ -98,6 +99,21 @@ class IntegrateShortAnswer(Rule):
     def effects(state: DialogState, move, question):
         state.agenda.pop(0)
         state.facts.append(combine(move, question))
+
+
+class IntegrateShortAnswerForConfirmAction(Rule):
+    @staticmethod
+    def preconditions(state: DialogState):
+        if len(state.agenda) > 0:
+            current_action = state.agenda[0]
+            if isinstance(current_action, ConfirmAction):
+                for move in state.latest_moves:
+                    if isinstance(move, Confirm):
+                        return True
+
+    @staticmethod
+    def effects(state: DialogState):
+        state.agenda.pop(0)
 
 
 class SelectNegativeUnderstanding(Rule):
