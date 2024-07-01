@@ -38,6 +38,28 @@ class GreetAction(Action):
 
 
 @dataclass
+class Proposition(SemanticClass):
+    pass
+
+
+@dataclass
+class PredicateProposition(Proposition):
+    predicate: Predicate
+    argument: Individual
+
+
+@dataclass
+class CreateWholeDayMeeting(Proposition):
+    pass
+
+
+@dataclass
+class ActionConfirmation(Proposition):
+    action: SemanticClass
+    parameters: list[Proposition]
+
+
+@dataclass
 class Question(SemanticClass):
     pass
 
@@ -58,6 +80,12 @@ class Findout(Action):
 
 
 @dataclass
+class ConfirmAction(Action):
+    action: SemanticClass
+    predicates: list[Predicate]
+
+
+@dataclass
 class Ask(Move):
     question: Question
 
@@ -68,19 +96,13 @@ class ShortAnswer(Move):
 
 
 @dataclass
-class Proposition(SemanticClass):
-    pass
-
-
-@dataclass
-class PredicateProposition(SemanticClass):
-    predicate: Predicate
-    argument: Individual
-
-
-@dataclass
 class Request(Move):
     action: Action
+
+
+@dataclass
+class Confirm(Move):
+    pass
 
 
 @dataclass

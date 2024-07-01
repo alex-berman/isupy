@@ -4,7 +4,13 @@ import isupy.dm
 from isupy.logger import logger
 
 from examples.appointment.ontology import *
-from examples.appointment.pragmatics import is_relevant_answer
+from examples.appointment.pragmatics import is_relevant_answer, combine
+
+
+def get_fact_argument(state, predicate):
+    for fact in state.facts:
+        if isinstance(fact, PredicateProposition) and fact.predicate == predicate:
+            return fact.argument
 
 
 class DialogueManager(isupy.dm.DialogueManager):
@@ -16,7 +22,8 @@ class DialogueManager(isupy.dm.DialogueManager):
         try_rule(state, IntegrateRequest)
         try_rule(state, IntegrateShortAnswer)
         try_rule(state, SelectGreet)
-        try_rule(state, SelectAsk)
+        try_rule(state, SelectAskViaFindout)
+        try_rule(state, SelectAskActionConfirmation)
         logger.debug('get_next_moves returns', next_moves=state.next_moves)
         return state.next_moves
 
@@ -36,7 +43,7 @@ class SelectGreet(Rule):
         state.next_moves.append(Greet())
 
 
-class SelectAsk(Rule):
+class SelectAskViaFindout(Rule):
     @staticmethod
     def preconditions(state: DialogState):
         return len(state.agenda) > 0 and isinstance(state.agenda[0], Findout)
@@ -44,6 +51,21 @@ class SelectAsk(Rule):
     @staticmethod
     def effects(state: DialogState):
         state.next_moves.append(Ask(state.agenda[0].question))
+
+
+class SelectAskActionConfirmation(Rule):
+    @staticmethod
+    def preconditions(state: DialogState):
+        return len(state.agenda) > 0 and isinstance(state.agenda[0], ConfirmAction)
+
+    @staticmethod
+    def effects(state: DialogState):
+        confirm_action = state.agenda[0]
+        parameters = [
+            PredicateProposition(predicate, get_fact_argument(state, predicate))
+            for predicate in confirm_action.predicates
+        ]
+        state.next_moves.append(Ask(ActionConfirmation(confirm_action.action, parameters)))
 
 
 class IntegrateRequest(Rule):
@@ -56,7 +78,8 @@ class IntegrateRequest(Rule):
         state.agenda = [
             Findout(WhQuestion(meeting_person)),
             Findout(WhQuestion(meeting_date)),
-            Findout(BooleanQuestion(meeting_whole_day))
+            Findout(BooleanQuestion(meeting_whole_day)),
+            ConfirmAction(CreateWholeDayMeeting, [meeting_person, meeting_date, meeting_whole_day])
             ] + state.agenda
 
 
@@ -69,12 +92,12 @@ class IntegrateShortAnswer(Rule):
                 current_question = current_action.question
                 for move in state.latest_moves:
                     if is_relevant_answer(move, current_question):
-                        return {'predicate': current_question.predicate, 'individual': move.individual}
+                        return {'move': move, 'question': current_question}
 
     @staticmethod
-    def effects(state: DialogState, predicate, individual):
+    def effects(state: DialogState, move, question):
         state.agenda.pop(0)
-        state.facts.append(PredicateProposition(predicate, individual))
+        state.facts.append(combine(move, question))
 
 
 class SelectNegativeUnderstanding(Rule):
