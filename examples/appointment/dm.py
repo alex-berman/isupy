@@ -6,21 +6,19 @@ from examples.appointment.ontology import *
 
 
 class DialogueManager(isupy.dm.DialogueManager):
-    def get_system_move(self, state):
-        try_rule(state, GetLatestMoves)
-        return state.next_system_move
+    def get_next_moves(self, state):
+        try_rule(state, SelectGreet)
+        return state.next_moves
 
-    def set_user_move(self, state, move):
+    def set_latest_move(self, state, move):
         state.user_move = move
 
 
-class GetLatestMoves(Rule):
+class SelectGreet(Rule):
     @staticmethod
     def preconditions(state: DialogState):
-        return True
+        return len(state.private.agenda) > 0 and state.private.agenda[0] == GreetAction()
 
     @staticmethod
     def effects(state: DialogState):
-        if state.user_input and state.user_input.move:
-            state.private.non_integrated_moves.append(state.user_input.move)
-            state.shared.latest_moves.append(state.user_input.move)
+        state.next_moves.append(Greet())

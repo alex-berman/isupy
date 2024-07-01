@@ -19,11 +19,11 @@ def handle_turn_sem(dm, speaker, move_representation, state):
     if speaker == 'S':
         expected_system_move = None if move_representation == '' else deserialize(move_representation)
         try:
-            actual_system_move = dm.get_system_move(state)
+            actual_system_move = dm.get_next_moves(state)
         except:
             pytest.fail(f'Exception raised when expecting system move {move_representation}')
             raise
         assert actual_system_move == expected_system_move
     elif speaker == 'U':
         move = deserialize(move_representation)
-        state.user_input = UserInput(move=move)
+        state.latest_move = move

@@ -6,10 +6,10 @@ from isupy.ontology import DialogState
 class DialogueManager(ABC):
     @staticmethod
     @abstractmethod
-    def get_system_move(state: DialogState):
+    def get_next_moves(state: DialogState):
         pass
 
     @staticmethod
     @abstractmethod
-    def set_user_move(state: DialogState):
+    def set_latest_move(state: DialogState):
         pass
