@@ -80,7 +80,7 @@ class Findout(Action):
 
 
 @dataclass
-class ConfirmAction(Action):
+class PerformAction(Action):
     action: SemanticClass
     predicates: list[Predicate]
 
@@ -122,5 +122,6 @@ class CreateAppointment(Action):
 
 @dataclass
 class DialogState(isupy.ontology.DialogState):
+    non_integrated_moves: list[Move] = field(default_factory=list)
     agenda: list[Action] = field(default_factory=lambda: [GreetAction()])
     facts: list[Proposition] = field(default_factory=list)
