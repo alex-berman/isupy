@@ -13,6 +13,20 @@ def get_fact_argument(state, predicate):
             return fact.argument
 
 
+def put_appointment_slot_filling_on_agenda(state):
+    state.agenda = [
+        Findout(WhQuestion(meeting_person)),
+        Findout(WhQuestion(meeting_date)),
+        Findout(BooleanQuestion(meeting_whole_day)),
+        TryRule(PlanActionsDependingOnMeetingWholeDay)
+        ] + state.agenda
+
+
+def clear_facts_and_put_appointment_slot_filling_on_agenda(state):
+    state.facts = []
+    put_appointment_slot_filling_on_agenda(state)
+
+
 class DialogueManager(isupy.dm.DialogueManager):
     @staticmethod
     def get_next_moves(state: DialogState):
@@ -83,12 +97,7 @@ class IntegrateRequest(Rule):
 
     @staticmethod
     def effects(state: DialogState):
-        state.agenda = [
-            Findout(WhQuestion(meeting_person)),
-            Findout(WhQuestion(meeting_date)),
-            Findout(BooleanQuestion(meeting_whole_day)),
-            TryRule(PlanActionsDependingOnMeetingWholeDay)
-            ] + state.agenda
+        put_appointment_slot_filling_on_agenda(state)
         state.non_integrated_moves.pop(0)
 
 
@@ -100,11 +109,14 @@ class PlanActionsDependingOnMeetingWholeDay(Rule):
     @staticmethod
     def effects(state: DialogState):
         if PredicateProposition(meeting_whole_day, True) in state.facts:
-            state.agenda.insert(0, PerformAction(CreateWholeDayMeeting, [meeting_person, meeting_date]))
+            state.agenda.insert(
+                0, PerformAction(CreateWholeDayMeeting, [meeting_person, meeting_date],
+                                 on_deny=lambda: clear_facts_and_put_appointment_slot_filling_on_agenda(state)))
         else:
             state.agenda = [
                 Findout(WhQuestion(meeting_time)),
-                PerformAction(CreateNotWholeDayMeeting, [meeting_person, meeting_date, meeting_time])
+                PerformAction(CreateNotWholeDayMeeting, [meeting_person, meeting_date, meeting_time],
+                              on_deny=lambda: clear_facts_and_put_appointment_slot_filling_on_agenda(state))
             ] + state.agenda
 
 
@@ -133,14 +145,21 @@ class IntegrateShortAnswerForConfirmAction(Rule):
             current_action = state.agenda[0]
             if isinstance(current_action, PerformAction):
                 for move in state.non_integrated_moves:
-                    if isinstance(move, Confirm):
+                    if move in [Confirm(), Deny()]:
                         return {'move': move}
 
     @staticmethod
     def effects(state: DialogState, move):
-        state.next_moves.insert(0, PerformedAction(state.agenda[0].action))
-        state.agenda.pop(0)
-        state.non_integrated_moves.remove(move)
+        if move == Confirm():
+            state.next_moves.insert(0, PerformedAction(state.agenda[0].action))
+            state.agenda.pop(0)
+            state.non_integrated_moves.remove(move)
+        else:
+            on_deny = state.agenda[0].on_deny
+            state.agenda.pop(0)
+            state.non_integrated_moves.remove(move)
+            if on_deny:
+                on_deny()
 
 
 class SelectNegativeUnderstanding(Rule):

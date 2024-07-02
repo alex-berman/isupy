@@ -1,3 +1,5 @@
+from typing import Optional, Callable
+
 from isupy.ontology import *
 import isupy.ontology
 from isupy.rule import Rule
@@ -92,6 +94,7 @@ class Findout(Action):
 class PerformAction(Action):
     action: SemanticClass
     predicates: list[Predicate]
+    on_deny: Optional[Callable] = None
 
 
 @dataclass

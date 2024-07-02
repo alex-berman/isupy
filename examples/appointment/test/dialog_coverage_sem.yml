@@ -12,6 +12,20 @@ create_appointment_whole_day_confirm:
     - U [Confirm()]
     - S [PerformedAction(CreateWholeDayMeeting)]
 
+create_appointment_whole_day_deny:
+  turns:
+    - S [Greet()]
+    - U [Request(CreateAppointment())]
+    - S [Ask(WhQuestion(meeting_person))]
+    - U [ShortAnswer(vlad)]
+    - S [Ask(WhQuestion(meeting_date))]
+    - U [ShortAnswer(monday)]
+    - S [Ask(BooleanQuestion(meeting_whole_day))]
+    - U [Confirm()]
+    - S [Ask(ActionConfirmation(CreateWholeDayMeeting, [PredicateProposition(meeting_person, vlad), PredicateProposition(meeting_date, monday)]))]
+    - U [Deny()]
+    - S [Ask(WhQuestion(meeting_person))]
+
 create_appointment_not_whole_day_confirm:
   turns:
     - S [Greet()]
@@ -27,6 +41,22 @@ create_appointment_not_whole_day_confirm:
     - S [Ask(ActionConfirmation(CreateNotWholeDayMeeting, [PredicateProposition(meeting_person, vlad), PredicateProposition(meeting_date, monday), PredicateProposition(meeting_time, two_pm)]))]
     - U [Confirm()]
     - S [PerformedAction(CreateNotWholeDayMeeting)]
+
+create_appointment_not_whole_day_deny:
+  turns:
+    - S [Greet()]
+    - U [Request(CreateAppointment())]
+    - S [Ask(WhQuestion(meeting_person))]
+    - U [ShortAnswer(vlad)]
+    - S [Ask(WhQuestion(meeting_date))]
+    - U [ShortAnswer(monday)]
+    - S [Ask(BooleanQuestion(meeting_whole_day))]
+    - U [Deny()]
+    - S [Ask(WhQuestion(meeting_time))]
+    - U [ShortAnswer(two_pm)]
+    - S [Ask(ActionConfirmation(CreateNotWholeDayMeeting, [PredicateProposition(meeting_person, vlad), PredicateProposition(meeting_date, monday), PredicateProposition(meeting_time, two_pm)]))]
+    - U [Deny()]
+    - S [Ask(WhQuestion(meeting_person))]
 
 short_answer_of_wrong_sort:
   turns:
