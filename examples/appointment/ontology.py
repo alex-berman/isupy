@@ -1,5 +1,6 @@
 from isupy.ontology import *
 import isupy.ontology
+from isupy.rule import Rule
 
 
 def create_sort(name):
@@ -19,12 +20,15 @@ class Predicate(SemanticClass):
 
 person = create_sort('person')
 date = create_sort('date')
+time = create_sort('time')
 boolean = create_sort('boolean')
 meeting_person = Predicate(person)
 meeting_date = Predicate(date)
 meeting_whole_day = Predicate(boolean)
+meeting_time = Predicate(time)
 vlad = Individual('vlad', person)
 monday = Individual('monday', date)
+two_pm = Individual('two_pm', time)
 
 
 @dataclass
@@ -50,6 +54,11 @@ class PredicateProposition(Proposition):
 
 @dataclass
 class CreateWholeDayMeeting(Proposition):
+    pass
+
+
+@dataclass
+class CreateNotWholeDayMeeting(Proposition):
     pass
 
 
@@ -86,6 +95,11 @@ class PerformAction(Action):
 
 
 @dataclass
+class TryRule(Action):
+    rule: Rule
+
+
+@dataclass
 class Ask(Move):
     question: Question
 
@@ -102,6 +116,11 @@ class Request(Move):
 
 @dataclass
 class Confirm(Move):
+    pass
+
+
+@dataclass
+class Deny(Move):
     pass
 
 

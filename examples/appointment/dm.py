@@ -1,5 +1,5 @@
 from isupy.rule import Rule
-from isupy.isu import repeat_until_none_applicable
+from isupy.isu import repeat_until_none_applicable, try_rule
 import isupy.dm
 from isupy.logger import logger
 
@@ -27,6 +27,7 @@ class DialogueManager(isupy.dm.DialogueManager):
             SelectAskViaFindout,
             IntegrateShortAnswerForConfirmAction,
             SelectAskActionConfirmation,
+            ExecTryRule
         ])
         logger.debug('get_next_moves returns', next_moves=state.next_moves)
         return state.next_moves
@@ -86,9 +87,25 @@ class IntegrateRequest(Rule):
             Findout(WhQuestion(meeting_person)),
             Findout(WhQuestion(meeting_date)),
             Findout(BooleanQuestion(meeting_whole_day)),
-            PerformAction(CreateWholeDayMeeting, [meeting_person, meeting_date, meeting_whole_day])
+            TryRule(PlanActionsDependingOnMeetingWholeDay)
             ] + state.agenda
         state.non_integrated_moves.pop(0)
+
+
+class PlanActionsDependingOnMeetingWholeDay(Rule):
+    @staticmethod
+    def preconditions(state: DialogState):
+        return True
+
+    @staticmethod
+    def effects(state: DialogState):
+        if PredicateProposition(meeting_whole_day, True) in state.facts:
+            state.agenda.insert(0, PerformAction(CreateWholeDayMeeting, [meeting_person, meeting_date]))
+        else:
+            state.agenda = [
+                Findout(WhQuestion(meeting_time)),
+                PerformAction(CreateNotWholeDayMeeting, [meeting_person, meeting_date, meeting_time])
+            ] + state.agenda
 
 
 class IntegrateShortAnswerForFindout(Rule):
@@ -140,3 +157,14 @@ class SelectNegativeUnderstanding(Rule):
     @staticmethod
     def effects(state: DialogState):
         state.next_moves.insert(0, NegativeUnderstanding())
+
+
+class ExecTryRule(Rule):
+    @staticmethod
+    def preconditions(state: DialogState):
+        return len(state.agenda) > 0 and isinstance(state.agenda[0], TryRule)
+
+    @staticmethod
+    def effects(state: DialogState):
+        rule = state.agenda.pop(0).rule
+        try_rule(state, rule)
