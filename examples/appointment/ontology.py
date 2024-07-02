@@ -17,6 +17,7 @@ class Individual(SemanticClass):
 
 @dataclass
 class Predicate(SemanticClass):
+    name: str
     sort: TypeVar
 
 
@@ -24,10 +25,10 @@ person = create_sort('person')
 date = create_sort('date')
 time = create_sort('time')
 boolean = create_sort('boolean')
-meeting_person = Predicate(person)
-meeting_date = Predicate(date)
-meeting_whole_day = Predicate(boolean)
-meeting_time = Predicate(time)
+meeting_person = Predicate('meeting_person', person)
+meeting_date = Predicate('meeting_date', date)
+meeting_whole_day = Predicate('meeting_whole_day', boolean)
+meeting_time = Predicate('meeting_time', time)
 vlad = Individual('vlad', person)
 monday = Individual('monday', date)
 two_pm = Individual('two_pm', time)
@@ -113,6 +114,12 @@ class ShortAnswer(Move):
 
 
 @dataclass
+class PropositionalAnswer(Move):
+    predicate: Predicate
+    argument: Individual
+
+
+@dataclass
 class Request(Move):
     action: Action
 
@@ -144,6 +151,7 @@ class CreateAppointment(Action):
 
 @dataclass
 class DialogState(isupy.ontology.DialogState):
-    non_integrated_moves: list[Move] = field(default_factory=list)
+    non_processed_moves: list[Move] = field(default_factory=list)
     agenda: list[Action] = field(default_factory=lambda: [GreetAction()])
     facts: list[Proposition] = field(default_factory=list)
+    resolved_questions: list[Question] = field(default_factory=list)
