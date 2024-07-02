@@ -1,5 +1,5 @@
 from isupy.rule import Rule
-from isupy.isu import try_rule
+from isupy.isu import repeat_until_none_applicable
 import isupy.dm
 from isupy.logger import logger
 
@@ -18,30 +18,22 @@ class DialogueManager(isupy.dm.DialogueManager):
     def get_next_moves(state: DialogState):
         logger.debug('get_next_moves')
         state.next_moves = []
-        try_rule(state, GetLatestMoves)
-        try_rule(state, SelectNegativeUnderstanding)
-        try_rule(state, IntegrateRequest)
-        try_rule(state, IntegrateShortAnswerForFindout)
-        try_rule(state, SelectGreet)
-        try_rule(state, SelectAskViaFindout)
-        try_rule(state, IntegrateShortAnswerForConfirmAction)
-        try_rule(state, SelectAskActionConfirmation)
+        state.non_integrated_moves = list(state.latest_moves)
+        repeat_until_none_applicable(state, [
+            SelectNegativeUnderstanding,
+            IntegrateRequest,
+            IntegrateShortAnswerForFindout,
+            SelectGreet,
+            SelectAskViaFindout,
+            IntegrateShortAnswerForConfirmAction,
+            SelectAskActionConfirmation,
+        ])
         logger.debug('get_next_moves returns', next_moves=state.next_moves)
         return state.next_moves
 
     @staticmethod
     def set_latest_moves(state: DialogState, moves):
         state.latest_moves = moves
-
-
-class GetLatestMoves(Rule):
-    @staticmethod
-    def preconditions(state: DialogState):
-        return True
-
-    @staticmethod
-    def effects(state: DialogState):
-        state.non_integrated_moves = list(state.latest_moves)
 
 
 class SelectGreet(Rule):
@@ -58,7 +50,8 @@ class SelectGreet(Rule):
 class SelectAskViaFindout(Rule):
     @staticmethod
     def preconditions(state: DialogState):
-        return len(state.agenda) > 0 and isinstance(state.agenda[0], Findout)
+        return len(state.agenda) > 0 and isinstance(state.agenda[0], Findout) and \
+               Ask(state.agenda[0].question) not in state.next_moves
 
     @staticmethod
     def effects(state: DialogState):
@@ -68,7 +61,9 @@ class SelectAskViaFindout(Rule):
 class SelectAskActionConfirmation(Rule):
     @staticmethod
     def preconditions(state: DialogState):
-        return len(state.agenda) > 0 and isinstance(state.agenda[0], PerformAction)
+        return len(state.agenda) > 0 and isinstance(state.agenda[0], PerformAction) and not any(
+            isinstance(move, Ask) for move in state.next_moves
+        )
 
     @staticmethod
     def effects(state: DialogState):
@@ -134,7 +129,8 @@ class IntegrateShortAnswerForConfirmAction(Rule):
 class SelectNegativeUnderstanding(Rule):
     @staticmethod
     def preconditions(state: DialogState):
-        if len(state.agenda) > 0 and len(state.non_integrated_moves) > 0:
+        if len(state.agenda) > 0 and len(state.non_integrated_moves) > 0 and \
+                NegativeUnderstanding() not in state.next_moves:
             current_action = state.agenda[0]
             if isinstance(current_action, Findout):
                 current_question = current_action.question
