@@ -35,14 +35,14 @@ class DialogueManager(isupy.dm.DialogueManager):
         state.next_moves = []
         state.non_processed_moves = list(state.latest_moves)
         repeat_until_none_applicable(state, [
-            SelectNegativeUnderstanding,
             IntegrateRequest,
             IntegrateAnswerForFindout,
-            SelectGreet,
-            SelectAskViaFindout,
             IntegrateShortAnswerForConfirmAction,
+            SelectGreet,
+            SelectNegativeUnderstanding,
+            SelectAskViaFindout,
             SelectAskActionConfirmation,
-            ExecTryRule
+            ExecTryRule,
         ])
         logger.debug('get_next_moves returns', next_moves=state.next_moves)
         return state.next_moves
