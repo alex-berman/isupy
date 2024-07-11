@@ -2,7 +2,7 @@ from typing import Optional, Callable
 
 from isupy.ontology import *
 import isupy.ontology
-from isupy.rule import Rule
+from isupy.isu import Rule
 
 
 def create_sort(name):
