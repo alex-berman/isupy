@@ -1,30 +1,16 @@
-from isupy.isu import repeat_until_none_applicable, try_rule
+from isupy.isu import repeat_until_none_applicable
 import isupy.dm
 from isupy.logger import logger
 
 from examples.appointment.ontology import *
 from examples.appointment.pragmatics import is_relevant_answer, combine
+from examples.appointment.plans import plans
 
 
 def get_fact_argument(state, predicate):
     for fact in state.facts:
         if isinstance(fact, PredicateProposition) and fact.predicate == predicate:
             return fact.argument
-
-
-def put_appointment_slot_filling_on_agenda(state):
-    state.agenda = [
-        Findout(WhQuestion(meeting_person)),
-        Findout(WhQuestion(meeting_date)),
-        Findout(BooleanQuestion(meeting_whole_day)),
-        TryRule(plan_actions_depending_on_meeting_whole_day)
-        ] + state.agenda
-
-
-def forget_and_put_appointment_slot_filling_on_agenda(state):
-    state.facts = []
-    state.resolved_questions = []
-    put_appointment_slot_filling_on_agenda(state)
 
 
 class DialogueManager(isupy.dm.DialogueManager):
@@ -41,7 +27,7 @@ class DialogueManager(isupy.dm.DialogueManager):
             select_negative_understanding,
             select_ask_via_findout,
             select_ask_action_confirmation,
-            exec_try_rule,
+            execute_function
         ])
         logger.debug('get_next_moves returns', next_moves=state.next_moves)
         return state.next_moves
@@ -80,24 +66,13 @@ def select_ask_action_confirmation(state: DialogState):
 
 
 def integrate_request(state: DialogState):
-    if len(state.non_processed_moves) > 0 and state.non_processed_moves[0] == Request(CreateAppointment()):
-        yield True
-        put_appointment_slot_filling_on_agenda(state)
-        state.non_processed_moves.pop(0)
-
-
-def plan_actions_depending_on_meeting_whole_day(state: DialogState):
-    yield True
-    if PredicateProposition(meeting_whole_day, True) in state.facts:
-        state.agenda.insert(
-            0, PerformAction(CreateWholeDayMeeting, [meeting_person, meeting_date],
-                             on_deny=lambda: forget_and_put_appointment_slot_filling_on_agenda(state)))
-    else:
-        state.agenda = [
-            Findout(WhQuestion(meeting_time)),
-            PerformAction(CreateNotWholeDayMeeting, [meeting_person, meeting_date, meeting_time],
-                          on_deny=lambda: forget_and_put_appointment_slot_filling_on_agenda(state))
-        ] + state.agenda
+    if len(state.non_processed_moves) > 0 and isinstance(state.non_processed_moves[0], Request):
+        action_class = state.non_processed_moves[0].action.__class__
+        if action_class in plans:
+            yield True
+            plan = plans[action_class]
+            state.agenda = plan + state.agenda
+            state.non_processed_moves.pop(0)
 
 
 def integrate_answer_for_findout(state: DialogState):
@@ -145,8 +120,9 @@ def select_negative_understanding(state: DialogState):
                 state.non_processed_moves = []
 
 
-def exec_try_rule(state: DialogState):
-    if len(state.agenda) > 0 and isinstance(state.agenda[0], TryRule):
+def execute_function(state: DialogState):
+    if len(state.agenda) > 0 and isinstance(state.agenda[0], ExecuteFunction):
         yield True
-        rule = state.agenda.pop(0).rule
-        try_rule(state, rule)
+        function = state.agenda.pop(0).function
+        function(state)
+

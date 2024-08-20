@@ -99,8 +99,8 @@ class PerformAction(Action):
 
 
 @dataclass
-class TryRule(Action):
-    rule: Rule
+class ExecuteFunction(Action):
+    function: Callable
 
 
 @dataclass
